@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        .city-resources {
+
+            border: 1px brown solid;
+            margin-top: 5px;
+            margin-bottom: 5px;
+
+        }
+
+        .city-resources>span {
+            padding-left: 8px;
+            padding-right: 8px;
+            border-right: 1px rgb(83, 72, 10) solid;
+
+        }
+
+        .area {
+            display: block;
+            border: 2px black solid;
+        }
+
+        .area-title {
+            display: block;
+            padding-top: 6px;
+            padding-left: 6px;
+        }
+
+        .hide-expand-building-menu {
+            display: none;
+
+        }
+
+        .expand-building-place{
+            margin-top:7px;
+            margin-bottom:7px;
+            margin-left:20px;
+        }
+
+        .btn-building-upgrade {
+            border: 2px tomato solid;
+            font-size: 17px;
+            display: inline-block;
+            margin: 3px;
+            margin-left: 10px;
+            border-radius: 10%;
+            color: orangered;
+        }
+
+        .btn-building-upgrade:hover {
+            background: rgb(169, 165, 223);
+            border: 0px;
+            padding: 2px;
+            COLOR: rgb(38, 7, 216);
+            cursor: pointer;
+        }
+
+        .basic-building-place {
+            border: 2px black solid;
+            display: inline-block;
+            margin: 10px;
+            padding: 3px;
+            ;
+        }
+
+        .basic-building-place:hover {
+            cursor: pointer;
+            background: darkgoldenrod;
+        }
+    </style>
+    <script src="./player.js"></script>
+    <script src="./utils.js"></script>
+    <script src="./basicBuildingOBJ.js"></script>
+    <script src="./cityResourceBar.js"></script>
+</head>
+
+<body>
+
+    <section id="city">
+        <div id="city-resources" class="city-resources"></div>
+
+        <div id="city-buildings">
+
+            <div id="city-buildings-container">
+
+
+
+            </div>
+
+
+        </div>
+
+
+
+    </section>
+    <section></section>
+    <section></section>
+    <section></section>
+
+
+    <script>
+        BuildingCost = {
+
+            calculateSingleCost: function (params) {
+
+                // (currentBuilding.basicCosts[key] * currentBuilding.nextLevel[
+                //             key] * (currentBuilding.currentLevel + 1))
+
+                return (params.basicCost * params.multiForNextLvl * (params.currentLvl + 1));
+            },
+
+            upgradeCosts: function (currentBuilding) {
+
+                var arr = [];
+                for (key in currentBuilding.basicCosts) {
+
+                    if (currentBuilding.basicCosts.hasOwnProperty(key)) {
+
+                        var cost = this.calculateSingleCost({
+                            basicCost: currentBuilding.basicCosts[key],
+                            multiForNextLvl: currentBuilding.nextLevel[key],
+                            currentLvl: currentBuilding.currentLevel
+                        });
+                        var obj = {};
+                        obj[key] = cost;
+                        arr.push(obj);
+
+                    } //end if 
+                }
+
+                //console.log(arr);
+                return arr;
+            }
+
+
+
+        };
+    </script>
+
+    <script>
+        cityExpandArea = {
+
+            createBuildingExpandArea: function (i, expandAreaId, areaName) {
+
+
+                var expandArea = utils.crtElm({
+
+                    id: expandAreaId,
+                    class: 'expand-building-place expand-place-' + areaName +
+                        ' hide-expand-building-menu'
+
+                });
+
+                var expandAreaTitle = utils.crtElm({
+
+
+                    class: 'expand-building-place-title expand-place-' + areaName,
+                    text: 'More Details'
+                });
+
+                expandArea.appendChild(expandAreaTitle);
+                var expandAreaView = utils.crtElm({
+
+
+                    class: 'expand-building-place-view',
+
+                });
+
+                expandArea.appendChild(expandAreaView);
+
+
+                return expandArea;
+            },
+            loopResourcesCosts: function (params) {
+                var currentBuilding = params.currentBuilding;
+                for (key in currentBuilding.basicCosts) {
+
+                    if (currentBuilding.basicCosts.hasOwnProperty(key)) {
+
+                        var singleCost = BuildingCost.calculateSingleCost({
+                            basicCost: currentBuilding.basicCosts[key],
+                            multiForNextLvl: currentBuilding.nextLevel[key],
+                            currentLvl: currentBuilding.currentLevel
+                        });
+
+                        params.callback(singleCost);
+
+                    }
+                }
+            },
+            createExpandBuildingMenu: function (currentBuilding) {
+
+                var buildingExpand = utils.crtElm({
+                    class: 'building-expand'
+                });
+
+                var name = utils.crtElm({
+                    type: 'u',
+                    text: currentBuilding.showedName + " LVL :"
+                });
+                var level = utils.crtElm({
+                    type: 'span',
+                    text: currentBuilding.currentLevel
+                })
+
+                name.appendChild(level);
+
+                var upgradeData = utils.crtElm({
+                    class: 'building-expand-data',
+                    text: 'Next Level Costs: '
+                });
+
+
+                currentBuilding.exp ={};
+                currentBuilding.exp.level=level;
+                currentBuilding.exp.upgradeCostsResources = {};
+
+                this.loopResourcesCosts({
+                    currentBuilding: currentBuilding,
+                    callback: function (singleCost) {
+
+                        currentBuilding.exp.upgradeCostsResources[key] = utils.crtElm({
+                            type: 'span',
+                            text: key.toUpperCase() + " : " + singleCost + " , "
+                        });
+
+                        upgradeData.appendChild(currentBuilding.exp.upgradeCostsResources[key]);
+
+                    }
+                });
+
+                // console.log(upgradeCostsText);
+
+          
+
+
+                var upgradeBtn = utils.crtElm({
+                    class: 'btn-building-upgrade',
+                    text: 'Upgrade'
+                })
+                upgradeBtn.onclick = this.events.upgradeBuilding(currentBuilding);
+                buildingExpand.appendChild(name);
+                buildingExpand.appendChild(upgradeData);
+                buildingExpand.appendChild(upgradeBtn);
+
+                return buildingExpand;
+
+            },
+            updateExpandBuildingMenu:function(currentBuilding){
+
+                  this.loopResourcesCosts({
+                    currentBuilding: currentBuilding,
+                    callback: function (singleCost) {
+
+                        currentBuilding.exp.upgradeCostsResources[key].innerText = key.toUpperCase() + " : " + singleCost + " , " ;
+
+                    }
+                });
+
+
+
+
+            },
+
+            events: {
+
+                openExpandMenu: function (currentBuilding) {
+
+                    return function () {
+
+
+                        console.log(currentBuilding);
+
+                        var view = currentBuilding.expandElm.getElementsByClassName(
+                            'expand-building-place-view');
+                        view = view[0];
+                        console.log(view);
+
+
+                        var isClose = currentBuilding.expandElm.classList.contains(
+                            'hide-expand-building-menu')
+                        //var LastBuildingName = 
+                        if (isClose) {
+
+                            view.appendChild(currentBuilding.ExpandBuildingMenu);
+                            currentBuilding.expandElm.classList.remove('hide-expand-building-menu');
+                            currentBuilding.expandElm.setAttribute("currentBuildingName", currentBuilding.name)
+
+
+                        } else {
+
+                            view.innerHTML = '';
+                            var currentBuildingName = currentBuilding.name;
+                            var lastBuildingName = currentBuilding.expandElm.getAttribute(
+                                "currentBuildingName");
+                            if (currentBuildingName === lastBuildingName) {
+
+                                currentBuilding.expandElm.classList.add('hide-expand-building-menu');
+
+                            } else {
+
+                                view.appendChild(currentBuilding.ExpandBuildingMenu);
+                                currentBuilding.expandElm.setAttribute("currentBuildingName",
+                                    currentBuilding.name)
+
+
+                            }
+
+                        }
+                    }
+                }, //end click event
+
+                upgradeBuilding: function (currentBuilding) {
+                    return function () {
+                        console.log(currentBuilding)
+                        var costArr = BuildingCost.upgradeCosts(currentBuilding);
+                        console.log(costArr)
+                        if (player.tryUpgrade(costArr)) {
+                            currentBuilding.currentLevel++;
+                            currentBuilding.exp.level.innerText =  currentBuilding.currentLevel;
+                            cityExpandArea.updateExpandBuildingMenu(currentBuilding);
+                            cityResourceBar.updateBar();
+                        } else {
+                            alert("no funds");
+                        }
+
+
+                    }
+                }
+            }
+
+
+
+        }
+
+        city = {
+            cityBuildingsContainerID: 'city-buildings-container',
+            cityBuildingsContainer: null,
+            cityBuildings: cityBuildings,
+            areas: [],
+            getCityBuildingsContainer: function () {
+                this.cityBuildingsContainer = document.getElementById(this.cityBuildingsContainerID)
+            },
+            createArea: function (i) {
+
+                var area = utils.crtElm({
+                    class: 'area'
+                });
+
+                var areaTitle = utils.crtElm({
+                    class: 'area-title',
+                    text: this.cityBuildings[i].area
+                })
+
+
+                area.appendChild(areaTitle);
+                this.cityBuildingsContainer.appendChild(area);
+                this.areas.push(area);
+                return area;
+
+            },
+
+
+
+            building: {
+                createDOM: function (param) {
+                    //TODO add picture for each building
+                    var building = utils.crtElm({
+                        class: 'basic-building-place',
+                        text: param.title
+                    })
+
+                    return building;
+
+                },
+
+                createExpandMenu: function (currentBuilding) {
+
+                    var ExpandBuildingMenu = null;
+                    switch (currentBuilding.type) {
+                        case 'resource':
+                            ExpandBuildingMenu = cityExpandArea.createExpandBuildingMenu(currentBuilding);
+                            break;
+
+                        default:
+                            //TODO  add ExpandBuildingMenu to each type seperatly
+                            ExpandBuildingMenu = cityExpandArea.createExpandBuildingMenu(currentBuilding);
+                            break;
+                    }
+
+
+                    return ExpandBuildingMenu;
+
+                },
+
+                createBuilding: function (currentBuilding, expandElm, expandAreaId) {
+
+                    currentBuilding.DOM = this.createDOM({
+                        title: currentBuilding.showedName
+                    });
+
+                    currentBuilding.ExpandBuildingMenu = this.createExpandMenu(currentBuilding);
+
+                    //show building details
+                    currentBuilding.expandElm = expandElm;
+                    currentBuilding.expandAreaId = expandAreaId;
+                    //click event to show expand arae
+                    currentBuilding.DOM.onclick = cityExpandArea.events.openExpandMenu(currentBuilding)
+
+                },
+
+
+
+
+            },
+
+            drawAreas: function () {
+
+                //loop over all areas
+                for (var i = 0; i < this.cityBuildings.length; i++) {
+                    console.log(this.cityBuildings[i]);
+
+                    this.cityBuildings[i].areaDOM = this.createArea(i);
+                    var areaName = this.cityBuildings[i].area;
+                    var expandAreaId = areaName + "-expand-area";
+
+                    var expandElm = cityExpandArea.createBuildingExpandArea(i, expandAreaId, areaName);
+                    this.cityBuildingsContainer.appendChild(expandElm);
+                    this.cityBuildings[i].buldingsExpandDOM = expandElm;
+
+
+
+                    //loop over buildings in a single area
+                    this.cityBuildings[i].buildingsOBJ = [];
+                    for (var j = 0; j < cityBuildings[i].buildings.length; j++) {
+                        var currentBuilding = cityBuildings[i].buildings[j]
+
+                        //all building built here with their events
+                        this.building.createBuilding(currentBuilding, expandElm, expandAreaId);
+
+
+                        this.cityBuildings[i].areaDOM.appendChild(currentBuilding.DOM);
+
+                        this.cityBuildings[i].buildingsOBJ.push({
+                            currentBuilding
+                        });
+
+                    }
+
+
+                }
+                // this.cityBuildingsContainer.
+            },
+            init: function () {
+                cityResourceBar.createBar();
+                this.getCityBuildingsContainer();
+                this.drawAreas();
+
+            }
+        };
+
+        player.init();
+        city.init();
+    </script>
+
+
+</body>
+
+</html>
